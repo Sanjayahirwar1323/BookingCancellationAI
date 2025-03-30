@@ -59,6 +59,7 @@ pipeline{
                 }
             }
         }
+        
 
 
         // stage('Deploy to Google Cloud Run'){
@@ -86,5 +87,21 @@ pipeline{
         //     }
         // }
         
+    }
+}
+pipeline {
+    agent any
+    environment {
+        GIT_EXECUTABLE = '/usr/bin/git'  // Adjust this path if necessary
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    env.PATH = "/usr/bin:" + env.PATH
+                }
+                checkout scm
+            }
+        }
     }
 }
