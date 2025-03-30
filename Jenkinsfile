@@ -24,7 +24,7 @@ pipeline {
                     echo 'Setting up Virtual Environment and Installing Dependencies............'
                     sh '''
                     python3 -m venv ${VENV_DIR}
-                    source ${VENV_DIR}/bin/activate
+                    . ${VENV_DIR}/bin/activate  # Fixed source issue
                     pip install --upgrade pip
                     if [ -f requirements.txt ]; then
                         pip install -r requirements.txt
@@ -48,11 +48,8 @@ pipeline {
                         gcloud config set project ${GCP_PROJECT}
                         gcloud auth configure-docker --quiet
 
-                        # Ensure Buildx is enabled for M1 compatibility
-                        docker buildx create --use || true
-
-                        # Build for amd64 (Mac M1 compatibility)
-                        docker buildx build --platform=linux/amd64 -t gcr.io/${GCP_PROJECT}/ml-project:latest --push .
+                        docker build -t gcr.io/${GCP_PROJECT}/ml-project:latest .
+                        docker push gcr.io/${GCP_PROJECT}/ml-project:latest
                         '''
                     }
                 }
