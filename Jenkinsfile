@@ -17,7 +17,6 @@ pipeline{
             }
         }
     
-
         stage('Setting up our Virtual Environment and Installing dependancies'){
             steps{
                 script{
@@ -32,27 +31,29 @@ pipeline{
             }
         }
 
-    
-
-        stage('Building and Pushing Docker Image to GCR'){
-            steps{
-                withCredentials([file(credentialsId: 'gcp-key' , variable : 'GOOGLE_APPLICATION_CREDENTIALS')]){
-                    script{
+        stage('Building and Pushing Docker Image to GCR') {
+            steps {
+                withCredentials([file(credentialsId: 'gcp-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
+                    script {
                         echo 'Building and Pushing Docker Image to GCR.............'
                         sh '''
-                        export PATH=$PATH:${GCLOUD_PATH}
-
-
+                        # Set paths for macOS (M1 specific)
+                        export PATH="/usr/local/bin:${PATH}:/opt/homebrew/bin"
+                        
+                        # Activate GCP service account
                         gcloud auth activate-service-account --key-file=${GOOGLE_APPLICATION_CREDENTIALS}
-
+                        
+                        # Configure GCP project
                         gcloud config set project ${GCP_PROJECT}
-
-                        gcloud auth configure-docker --quiet
-
-                        docker build -t gcr.io/${GCP_PROJECT}/ml-project:latest .
-
-                        docker push gcr.io/${GCP_PROJECT}/ml-project:latest 
-
+                        
+                        # Configure Docker for GCR with ARM64 architecture
+                        gcloud auth configure-docker --quiet gcr.io
+                        
+                        # Build Docker image for ARM64 architecture
+                        docker build --platform linux/arm64 -t gcr.io/${GCP_PROJECT}/ml-project:latest .
+                        
+                        # Push to GCR
+                        docker push gcr.io/${GCP_PROJECT}/ml-project:latest
                         '''
                     }
                 }
@@ -60,6 +61,9 @@ pipeline{
         }
     }
 }
+
+    
+
 
 
 //         stage('Deploy to Google Cloud Run'){
